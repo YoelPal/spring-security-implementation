@@ -1,7 +1,14 @@
 package com.yoel.springboot.app.springboot_crud.entities;
 
 import jakarta.persistence.Transient;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
 import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonProperty.Access;
+import com.yoel.springboot.app.springboot_crud.validation.ExistsByUsername;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -26,10 +33,15 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ExistsByUsername
     @Column(nullable = false, unique = true)
+    @NotBlank(message = "no puede estar vacío")
+    @Size(min = 3, message = "debe tener al menos 3 caracteres")
     private String username;
-
+    
     @Column(nullable = false)
+    @JsonProperty( access = JsonProperty.Access.WRITE_ONLY)
+    @NotBlank(message = "no puede estar vacío")
     private String password;
 
     @ManyToMany
@@ -43,7 +55,14 @@ public class User {
     )
     private List<Role> roles;
 
-    @Transient // Este campo no se persistirá en la base de datos
-    private boolean isAdmin;
+    @Transient// Este campo no se persistirá en la base de datos
+    @JsonProperty( access = JsonProperty.Access.WRITE_ONLY)
+    private boolean admin;
+
+    // public boolean isAdmin() {
+    //     return roles.stream().anyMatch(role -> role.getName().equals("ROLE_ADMIN"));
+    // }
+
+    private boolean enabled = true;
 
 }

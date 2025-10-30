@@ -4,9 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.yoel.springboot.app.springboot_crud.entities.Role;
 import com.yoel.springboot.app.springboot_crud.entities.User;
@@ -25,13 +27,13 @@ public class UserServiceImpl implements UserService {
     public UserServiceImpl(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
-        this.passwordEncoder = null;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<User> findAll() {
-        return  userRepository.findAll();
+        return userRepository.findAll();
     }
 
     @Override
@@ -42,23 +44,21 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public User save(User user) {
+    public User register(User user) {
 
         Optional<Role> optionalRole = roleRepository.findByName("ROLE_USER");
         List<Role> roles = new ArrayList<>();
 
         optionalRole.ifPresent(roles::add);
 
-        if (user.isAdmin()) {
-            Optional<Role> adminRoleOpt = roleRepository.findByName("ROLE_ADMIN");
-            adminRoleOpt.ifPresent(roles::add);
-        }
-
         user.setRoles(roles);
         String passwordEncoded =passwordEncoder.encode(user.getPassword());
         user.setPassword(passwordEncoded);
+        user.setAdmin(false);
         return userRepository.save(user);
     }
+
+
 
     @Override
     @Transactional
@@ -80,5 +80,35 @@ public class UserServiceImpl implements UserService {
             return null;
         }
     }
+
+    @Transactional
+    public User changeRole(Long id, Role role) {
+
+        User user = userRepository.findById(id)
+        .orElseThrow(() -> new ResponseStatusException(
+            HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+
+        Role roleDb = roleRepository.findByName(role.getName())
+        .orElseThrow(() -> new ResponseStatusException(
+            HttpStatus.NOT_FOUND, "Rol no encontrado"));
+
+            List<Role> roles = user.getRoles();
+            
+                if (!roles.contains(roleDb)) {
+                    roles.add(roleDb);
+                    user.setRoles(roles);
+                }
+
+                boolean isAdmin = roles.stream()
+                .anyMatch(r -> r.getName().equals("ROLE_ADMIN"));
+                user.setAdmin(isAdmin);
+            return userRepository.save(user);
+    }
+
+    @Override
+    public boolean existsByUsername(String username) {
+        return userRepository.existsByUsername(username);   
+    }
+    
 
 }
