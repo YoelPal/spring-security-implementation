@@ -7,7 +7,6 @@ import jakarta.validation.constraints.Size;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonProperty.Access;
 import com.yoel.springboot.app.springboot_crud.validation.ExistsByUsername;
 
 import jakarta.persistence.Column;
@@ -58,10 +57,6 @@ public class User {
     @Transient// Este campo no se persistirá en la base de datos
     @JsonProperty( access = JsonProperty.Access.WRITE_ONLY)
     private boolean admin;
-
-    // public boolean isAdmin() {
-    //     return roles.stream().anyMatch(role -> role.getName().equals("ROLE_ADMIN"));
-    // }
 
     private boolean enabled = true;
 
